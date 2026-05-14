@@ -1,10 +1,10 @@
 name: Build Custom Caddy Binaries
 
 on:
-  workflow_dispatch:   # Manual trigger only
+  workflow_dispatch:
 
 permissions:
-  contents: write     # Required for creating releases
+  contents: write
 
 jobs:
   build:
@@ -23,20 +23,31 @@ jobs:
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
       # ======================
-      # Build 1: Rate Limit (amd64)
+      # Build Both Binaries
       # ======================
-      - name: Build Caddy with Rate Limit (amd64)
+      - name: Build Caddy with Rate Limit Module (amd64)
         run: |
           xcaddy build --with github.com/mholt/caddy-ratelimit \
             --output caddy-ratelimit-linux-amd64
 
+      - name: Build Caddy with Cloudflare DNS Module (arm64)
+        run: |
+          xcaddy build --with github.com/caddy-dns/cloudflare \
+            --output caddy-cloudflare-linux-arm64
+
+      # ======================
+      # Get Caddy Version
+      # ======================
       - name: Get Caddy Version
         id: version
         run: |
           VERSION=$(./caddy-ratelimit-linux-amd64 version | head -n1 | awk '{print $1}')
           echo "caddy_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Caddy version detected: $VERSION"
+          echo "✅ Caddy version detected: $VERSION"
 
+      # ======================
+      # Rename binaries
+      # ======================
       - name: Rename binaries with version
         run: |
           mv caddy-ratelimit-linux-amd64 caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64
@@ -46,12 +57,16 @@ jobs:
         run: chmod +x caddy-*
 
       # ======================
-      # Build 2: Cloudflare DNS (arm64)
+      # Generate SHA256 Checksums
       # ======================
-      - name: Build Caddy with Cloudflare DNS (arm64)
+      - name: Generate SHA256 Checksums
+        id: checksums
         run: |
-          xcaddy build --with github.com/caddy-dns/cloudflare \
-            --output caddy-cloudflare-linux-arm64
+          echo "## SHA256 Checksums" > checksums.txt
+          echo "" >> checksums.txt
+          sha256sum caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64 >> checksums.txt
+          sha256sum caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64 >> checksums.txt
+          cat checksums.txt
 
       # ======================
       # Upload Artifacts
@@ -69,7 +84,7 @@ jobs:
           path: caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
 
       # ======================
-      # Create GitHub Release
+      # Create GitHub Release with Checksums
       # ======================
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -81,13 +96,14 @@ jobs:
           files: |
             caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64
             caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
+          body_path: checksums.txt
           body: |
             **Custom Caddy Builds** — Manual run #${{ github.run_number }}
 
             **Caddy Version**: ${{ steps.version.outputs.caddy_version }}
 
             ### Binaries
-            - `caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64` → **Rate Limit** module
-            - `caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64` → **Cloudflare DNS** module
+            - `caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64` → Rate Limit module
+            - `caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64` → Cloudflare DNS module
 
             Built for: **Ubuntu 26.04 Server + WordPress**
