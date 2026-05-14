@@ -1,8 +1,12 @@
-# Custom Caddy Builds (Ubuntu 26.04 + WordPress)
+# Custom Caddy Builds 🚀
 
-This repo builds two custom **Caddy** binaries with popular modules using `xcaddy`.
+Custom builds of Caddy web server with rate-limit & Cloudflare DNS modules. Built for Linux amd64 & arm64. Extend if you wish.
 
-### Binaries (with auto-detected Caddy version)
+![Caddy](https://img.shields.io/badge/Caddy-2.x-1f88c2?style=for-the-badge&logo=caddy)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Build](https://img.shields.io/badge/Build-Manual%20Trigger-blue?style=for-the-badge)
+
+### Available Binaries
 
 | Binary                                      | Architecture | Included Module                     |
 |---------------------------------------------|--------------|-------------------------------------|
@@ -10,10 +14,29 @@ This repo builds two custom **Caddy** binaries with popular modules using `xcadd
 | `caddy-cloudflare-vX.Y.Z-linux-arm64`      | Linux arm64  | `github.com/caddy-dns/cloudflare`  |
 
 ### How to Build
+
 1. Go to **Actions** → **Build Custom Caddy Binaries**
 2. Click **"Run workflow"**
-3. Download binaries from the new Release.
+3. Download binaries + checksums from the latest Release
 
-Run this manually whenever you want the latest Caddy version.
+Run this workflow manually whenever a new Caddy version is released.
 
-**Server Stack**: Web Server: **Caddy** • Server OS: **Ubuntu 26.04 Server** • App: **WordPress**
+---
+
+### How to Verify Binaries (Security Recommended)
+
+After downloading, verify the binary using SHA256 checksums:
+
+```bash
+# Example for amd64
+sha256sum -c <<< "$(grep amd64 checksums.txt)"
+
+# Or manually
+sha256sum caddy-ratelimit-v2.11.3-linux-amd64
+
+## Credits
+
+Powered by xcaddy
+Built with ❤️ using Grok by xAI
+
+### License: MIT

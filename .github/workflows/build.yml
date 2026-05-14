@@ -23,15 +23,19 @@ jobs:
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
       # ======================
-      # Build Both Binaries
+      # Build 1: Rate Limit (amd64) - Native
       # ======================
-      - name: Build Caddy with Rate Limit Module (amd64)
+      - name: Build Caddy with Rate Limit Module (Linux amd64)
         run: |
           xcaddy build --with github.com/mholt/caddy-ratelimit \
             --output caddy-ratelimit-linux-amd64
 
-      - name: Build Caddy with Cloudflare DNS Module (arm64)
+      # ======================
+      # Build 2: Cloudflare DNS (arm64) - Cross compile
+      # ======================
+      - name: Build Caddy with Cloudflare DNS Module (Linux arm64)
         run: |
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
           xcaddy build --with github.com/caddy-dns/cloudflare \
             --output caddy-cloudflare-linux-arm64
 
@@ -60,7 +64,6 @@ jobs:
       # Generate SHA256 Checksums
       # ======================
       - name: Generate SHA256 Checksums
-        id: checksums
         run: |
           echo "## SHA256 Checksums" > checksums.txt
           echo "" >> checksums.txt
@@ -69,7 +72,7 @@ jobs:
           cat checksums.txt
 
       # ======================
-      # Upload Artifacts
+      # Upload Artifacts + Create Release
       # ======================
       - name: Upload Rate Limit Binary
         uses: actions/upload-artifact@v4
@@ -83,9 +86,6 @@ jobs:
           name: caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
           path: caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
 
-      # ======================
-      # Create GitHub Release with Checksums
-      # ======================
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -104,6 +104,6 @@ jobs:
 
             ### Binaries
             - `caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64` → Rate Limit module
-            - `caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64` → Cloudflare DNS module
+            - `caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64` → Cloudflare DNS module (arm64)
 
             Built for: **Ubuntu 26.04 Server + WordPress**
