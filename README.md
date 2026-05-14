@@ -1,23 +1,19 @@
-# Custom Caddy Builds
+# Custom Caddy Builds (Ubuntu 26.04 + WordPress)
 
-This repository builds two custom **Caddy** binaries using `xcaddy`:
+This repo builds two custom **Caddy** binaries with popular modules using `xcaddy`.
 
-### Binaries
-| Binary                        | Architecture | Module Included                          |
-|-------------------------------|--------------|------------------------------------------|
-| `caddy-ratelimit-linux-amd64` | Linux amd64  | `github.com/mholt/caddy-ratelimit`      |
-| `caddy-cloudflare-linux-arm64`| Linux arm64  | `github.com/caddy-dns/cloudflare`       |
+### Binaries (with auto-detected Caddy version)
 
-### How to Use
-1. Go to **Actions** → "Build Custom Caddy Binaries"
+| Binary                                      | Architecture | Included Module                     |
+|---------------------------------------------|--------------|-------------------------------------|
+| `caddy-ratelimit-vX.Y.Z-linux-amd64`       | Linux amd64  | `github.com/mholt/caddy-ratelimit` |
+| `caddy-cloudflare-vX.Y.Z-linux-arm64`      | Linux arm64  | `github.com/caddy-dns/cloudflare`  |
+
+### How to Build
+1. Go to **Actions** → **Build Custom Caddy Binaries**
 2. Click **"Run workflow"**
-3. Download the binaries from the created Release.
+3. Download binaries from the new Release.
 
-**Note**: Run this workflow manually whenever a new version of Caddy is released.
+Run this manually whenever you want the latest Caddy version.
 
----
-
-**Server Info** (as per your preference):
-- Web Server: **Caddy**
-- Server OS: **Ubuntu 26.04 Server**
-- App: **WordPress**
+**Server Stack**: Web Server: **Caddy** • Server OS: **Ubuntu 26.04 Server** • App: **WordPress**

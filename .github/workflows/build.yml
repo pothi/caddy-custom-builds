@@ -1,7 +1,10 @@
 name: Build Custom Caddy Binaries
 
 on:
-  workflow_dispatch:   # Manual trigger only - no automatic runs
+  workflow_dispatch:   # Manual trigger only
+
+permissions:
+  contents: write     # Required for creating releases
 
 jobs:
   build:
@@ -22,24 +25,33 @@ jobs:
       # ======================
       # Build 1: Rate Limit (amd64)
       # ======================
-      - name: Build Caddy with Rate Limit Module (Linux amd64)
+      - name: Build Caddy with Rate Limit (amd64)
         run: |
           xcaddy build --with github.com/mholt/caddy-ratelimit \
             --output caddy-ratelimit-linux-amd64
 
-      - name: Make Rate Limit binary executable
-        run: chmod +x caddy-ratelimit-linux-amd64
+      - name: Get Caddy Version
+        id: version
+        run: |
+          VERSION=$(./caddy-ratelimit-linux-amd64 version | head -n1 | awk '{print $1}')
+          echo "caddy_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Caddy version detected: $VERSION"
+
+      - name: Rename binaries with version
+        run: |
+          mv caddy-ratelimit-linux-amd64 caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64
+          mv caddy-cloudflare-linux-arm64 caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
+
+      - name: Make binaries executable
+        run: chmod +x caddy-*
 
       # ======================
       # Build 2: Cloudflare DNS (arm64)
       # ======================
-      - name: Build Caddy with Cloudflare DNS Module (Linux arm64)
+      - name: Build Caddy with Cloudflare DNS (arm64)
         run: |
           xcaddy build --with github.com/caddy-dns/cloudflare \
             --output caddy-cloudflare-linux-arm64
-
-      - name: Make Cloudflare binary executable
-        run: chmod +x caddy-cloudflare-linux-arm64
 
       # ======================
       # Upload Artifacts
@@ -47,14 +59,14 @@ jobs:
       - name: Upload Rate Limit Binary
         uses: actions/upload-artifact@v4
         with:
-          name: caddy-ratelimit-linux-amd64
-          path: caddy-ratelimit-linux-amd64
+          name: caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64
+          path: caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64
 
       - name: Upload Cloudflare Binary
         uses: actions/upload-artifact@v4
         with:
-          name: caddy-cloudflare-linux-arm64
-          path: caddy-cloudflare-linux-arm64
+          name: caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
+          path: caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
 
       # ======================
       # Create GitHub Release
@@ -62,18 +74,20 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Caddy Custom Builds #${{ github.run_number }}
+          tag_name: build-${{ github.run_number }}-${{ steps.version.outputs.caddy_version }}
+          name: Caddy Custom Builds - ${{ steps.version.outputs.caddy_version }}
           draft: false
           prerelease: false
           files: |
-            caddy-ratelimit-linux-amd64
-            caddy-cloudflare-linux-arm64
+            caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64
+            caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64
           body: |
-            **Custom Caddy Builds** - Manual run #${{ github.run_number }}
+            **Custom Caddy Builds** — Manual run #${{ github.run_number }}
+
+            **Caddy Version**: ${{ steps.version.outputs.caddy_version }}
 
             ### Binaries
-            - `caddy-ratelimit-linux-amd64` → includes **github.com/mholt/caddy-ratelimit**
-            - `caddy-cloudflare-linux-arm64` → includes **github.com/caddy-dns/cloudflare**
+            - `caddy-ratelimit-${{ steps.version.outputs.caddy_version }}-linux-amd64` → **Rate Limit** module
+            - `caddy-cloudflare-${{ steps.version.outputs.caddy_version }}-linux-arm64` → **Cloudflare DNS** module
 
-            Built with latest `xcaddy` on Ubuntu.
+            Built for: **Ubuntu 26.04 Server + WordPress**
