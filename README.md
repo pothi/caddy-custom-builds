@@ -25,14 +25,17 @@ Run this workflow manually whenever a new Caddy version is released.
 
 ### How to Verify Binaries (Security Recommended)
 
-After downloading, verify the binary using SHA256 checksums:
+**⚠️ Security Disclaimer**: These binaries are built automatically in GitHub Actions. While the workflow is transparent and open-source, **always verify the SHA256 checksums** before using them on any production server. This helps protect against supply-chain attacks or tampering.
 
 ```bash
-# Example for amd64
+# Verify using the provided checksums.txt from the release
 sha256sum -c <<< "$(grep amd64 checksums.txt)"
 
-# Or manually
+# Or check manually
 sha256sum caddy-ratelimit-v2.11.3-linux-amd64
+```
+
+The checksums are included in every GitHub Release.
 
 ## Credits
 
